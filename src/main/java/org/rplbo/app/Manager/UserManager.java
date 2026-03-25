@@ -1,5 +1,6 @@
 package org.rplbo.app.Manager;
 import org.rplbo.app.DBConnectionManager;
+import org.rplbo.app.Data.RekamMedis;
 import org.rplbo.app.Data.User;
 
 import java.sql.Connection;
@@ -48,16 +49,62 @@ public class UserManager {
     // --- METHOD CARI USER SESUAI ROLE ---
     public List<User> getUsersByRole(String role) {
         List<User> userList = new ArrayList<>();
+        try {
+            String query = "select * from users where role = ?";
+            PreparedStatement myStmt = connection.prepareStatement(query);
+            myStmt.setString(1, role);
+            ResultSet myRs = myStmt.executeQuery();
+            while (myRs.next()) {
+                String username = myRs.getString("username");
+                String email = myRs.getString("email");
+                String password = myRs.getString("password");
+                String role1 = myRs.getString("role");
+                User u = new User(username, email, password, role1);
+                userList.add(u);
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
         return userList;
     }
 
     // --- METHOD REGISTER (INSERT) ---
     public boolean registerUser(String username, String password, String email, String role) {
+        try {
+//            statement =connection.createStatement();
+            String query = "insert into users (username, email, password, role) values (?, ?, ?, ?)";
+            PreparedStatement myStmt = connection.prepareStatement(query);
+            myStmt.setString(1, username);
+            myStmt.setString(2, email);
+            myStmt.setString(3, password);
+            myStmt.setString(4, role);
+            int check = myStmt.executeUpdate();
+            if (check == 1) {
+                return true;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         return false;
     }
 
     // --- METHOD LOGIN (SELECT) ---
     public boolean authenticateUser(String username, String password) {
+        try {
+            String query = "select password from users where username = ?";
+            PreparedStatement myStmt = connection.prepareStatement(query);
+            myStmt.setString(1, username);
+            ResultSet myRs = myStmt.executeQuery();
+            String npassword;
+            while (myRs.next()) {
+                npassword = myRs.getString("password");
+                if (password.equals(npassword)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
         return false;
     }
 
